@@ -191,6 +191,18 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
                 promise.reject("Android AudioManager error, failed to request audio focus");
                 return;
             }
+        } else{
+            // Request audio focus for playback
+            int amResult = audioManager.requestAudioFocus(afChangeListener,
+                    // Use the music stream.
+                    AudioManager.STREAM_MUSIC,
+                    // Request permanent focus.
+                    AudioManager.AUDIOFOCUS_GAIN);
+
+            if(amResult != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                promise.reject("Android AudioManager error, failed to request audio focus");
+                return;
+            }
         }
 
         String utteranceId = Integer.toString(utterance.hashCode());
