@@ -32,6 +32,10 @@ class Tts extends NativeEventEmitter {
     return TextToSpeech.setDucking(enabled);
   }
 
+  setAudioFocusRequestBehavior(enabled) {
+    return TextToSpeech.setAudioFocusRequestBehavior(enabled);
+  }
+
   setDefaultEngine(engineName) {
     if (Platform.OS === 'ios') {
       return Promise.resolve(true);
