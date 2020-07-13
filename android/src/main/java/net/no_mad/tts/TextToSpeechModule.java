@@ -33,7 +33,6 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
     private boolean audioFocusRequestBehavior = false;
     private AudioManager audioManager;
     private AudioManager.OnAudioFocusChangeListener afChangeListener;
-    private AudioFocusRequest focusRequest;
 
     private Map<String, Locale> localeCountryMap;
     private Map<String, Locale> localeLanguageMap;
@@ -98,7 +97,10 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
                 public void onDone(String utteranceId) {
                     if (audioFocusRequestBehavior) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            audioManager.abandonAudioFocusRequest(focusRequest);
+                            MyProperties myProp = MyProperties.getInstance();
+                            if (myProp.focusRequest != null) {
+                                audioManager.abandonAudioFocusRequest(myProp.focusRequest);
+                            }
                         } else {
                             audioManager.abandonAudioFocus(afChangeListener);
                         }
@@ -110,7 +112,10 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
                 public void onError(String utteranceId) {
                     if (audioFocusRequestBehavior) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            audioManager.abandonAudioFocusRequest(focusRequest);
+                            MyProperties myProp = MyProperties.getInstance();
+                            if (myProp.focusRequest != null) {
+                                audioManager.abandonAudioFocusRequest(myProp.focusRequest);
+                            }
                         } else {
                             audioManager.abandonAudioFocus(afChangeListener);
                         }
@@ -122,7 +127,10 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
                 public void onStop(String utteranceId, boolean interrupted) {
                     if (audioFocusRequestBehavior) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            audioManager.abandonAudioFocusRequest(focusRequest);
+                            MyProperties myProp = MyProperties.getInstance();
+                            if (myProp.focusRequest != null) {
+                                audioManager.abandonAudioFocusRequest(myProp.focusRequest);
+                            }
                         } else {
                             audioManager.abandonAudioFocus(afChangeListener);
                         }
@@ -242,13 +250,14 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
             int durationHint = ducking ? AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK : AudioManager.AUDIOFOCUS_GAIN;
             // post oreo api level(android 8.0 and later)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                focusRequest = new AudioFocusRequest.Builder(durationHint)
+                MyProperties myProp = MyProperties.getInstance();
+                myProp.focusRequest = new AudioFocusRequest.Builder(durationHint)
                         .setOnAudioFocusChangeListener(afChangeListener)
                         .build();
-                int amResult = audioManager.requestAudioFocus(focusRequest);
+                int amResult = audioManager.requestAudioFocus(myProp.focusRequest);
 
                 if (amResult != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                    promise.reject("audio_focus_error","Android AudioManager error, failed to request audio focus");
+                    promise.reject("audio_focus_error", "Android AudioManager error, failed to request audio focus");
                     return;
                 }
             } else {
@@ -258,7 +267,7 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
                         durationHint);
 
                 if (amResult != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
-                    promise.reject("audio_focus_error","Android AudioManager error, failed to request audio focus");
+                    promise.reject("audio_focus_error", "Android AudioManager error, failed to request audio focus");
                     return;
                 }
             }
@@ -573,4 +582,20 @@ public class TextToSpeechModule extends ReactContextBaseJavaModule {
                 .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                 .emit(eventName, params);
     }
+}
+
+class MyProperties {
+    private static MyProperties mInstance = null;
+    public AudioFocusRequest focusRequest;
+
+    protected MyProperties() {
+    }
+
+    public static MyProperties getInstance() {
+        if (null == mInstance) {
+            mInstance = new MyProperties();
+        }
+        return mInstance;
+    }
+
 }
